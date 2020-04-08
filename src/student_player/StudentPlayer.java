@@ -40,8 +40,8 @@ public class StudentPlayer extends SaboteurPlayer {
 
 		//check if gold found 
 		SaboteurTile[][] boardTiles =boardState.getHiddenBoard(); //board 14x14 but only     	
-		if(boardTiles[5+7][5-2].getIdx() == "nugget") {goldFound=true; posGoldY = 3;}
-		else if(boardTiles[5+7][5].getIdx()== "nugget" ) { goldFound=true; posGoldY = 5;}
+		if(boardTiles[12][3].getIdx() == "nugget") {goldFound=true; posGoldY = 3; System.out.println("SHOULD NOT SEARCH ANYMORE GOLD");} // BUG IT DOESNT CHANGE -> it still search for middle
+		else if(boardTiles[5+7][5].getIdx()== "nugget" ) { goldFound=true; posGoldY = 5;}  
 		else if( boardTiles[5+7][5+2].getIdx()== "nugget") {goldFound=true; posGoldY=7; } //should never get here
 		else if(boardTiles[5+7][5-2].getIdx() != "8" && boardTiles[5+7][5].getIdx()!= "8") { goldFound=true; posGoldY=7; }
 
@@ -73,9 +73,6 @@ public class StudentPlayer extends SaboteurPlayer {
 			}
 		}
 		else {
-			//get max x and y ?
-			
-			
 			SaboteurMove path = MyTools.goToNugget(moves, posGoldY);
 			if(path != null) {
 				if(!boardState.isLegal(path)) System.out.println("BUG");
