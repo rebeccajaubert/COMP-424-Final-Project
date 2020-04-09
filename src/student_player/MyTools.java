@@ -20,6 +20,13 @@ import boardgame.Move;
 public class MyTools {
 	
     private static int deckAvail = 41; //55-7-7
+    private static String[] tilesOkToDiscard = {"1","2","2_flip","3","3_flip","4","4_flip","11","11_flip","12","12_flip","13","14","14_flip","15"};
+	private static String[] verticTiles = {"0","6","6_flip","8"};
+	private static String[] horizTiles = {"8","9","9_flip","10"};
+	private static String[] turnLeftTiles = {"5_flip","6","8"};
+	private static String[] turnRightTiles = {"5","6_flip","7","8"};
+	//private static String[] turnDownTiles = {"6","6_flip","7_flip","9","8"};
+	//private static String[] turnUpTiles = {"9_flip","8"};
     
     public static void initPosHiddenC(SaboteurBoardState boardState) {
     	
@@ -36,8 +43,7 @@ public class MyTools {
     
     public static SaboteurMove chooseDrop(ArrayList<SaboteurCard> myCurrentHand,int playerid) { 
     	SaboteurMove drop = null;
-    	int i = 1;
-    	String[] tilesOkToDiscard = {"1","2","3","4","11","13","14","15"};
+    	int i = 0; 
     	int destroysOrmalus=0;
     	for (SaboteurCard card : myCurrentHand) {
     		if(card instanceof SaboteurMap) return new SaboteurMove(new SaboteurDrop(),i,0,playerid);
@@ -57,7 +63,7 @@ public class MyTools {
     			i++;
     		}
     	}
-    	return new SaboteurMove(new SaboteurDrop(),1,0,playerid);
+    	return drop;
     }
     
     
@@ -111,42 +117,59 @@ public class MyTools {
     	SaboteurMove path = null; //goal find a move that is descendent (closer to nugget : {12,y} w/ y=3,5,7)
     	double priorityVerticalTiles;
     	double priorityHorizontalTiles;
-    	double priorityTurns;
+    	double priorityTurns; //idk yet
+    	
+    	double isVertic = 1; double isHoriz = 1; double isTurn = 1;
     	
     	// /!\ logically X and Y are inverted to our normal way of thinking
     	ArrayList<Integer> xs = new ArrayList<Integer>();
     	ArrayList<Integer> ys = new ArrayList<Integer>();
     	double maxX;double closestY=0;
+
     	
     	//get max x and y  -> non efficient rn
     	for (SaboteurMove move : moves) {
     		if(!(move.getCardPlayed() instanceof SaboteurTile)) continue;
     		SaboteurTile tile = (SaboteurTile) move.getCardPlayed();
+    		if(Arrays.asList(tilesOkToDiscard).contains(tile.getIdx())) continue; //we dont want to block path
     		int[] coord= move.getPosPlayed();
     		xs.add(coord[0]);
     		ys.add(coord[1]);
     	}
     	maxX= Collections.max(xs);
     	closestY= ys.stream().min( (y1,y2) -> Math.abs(y1-posGoldY) -  Math.abs(y2-posGoldY)).get();
+    	closestY = (Double) closestY; //necessary for division
     	
     	//set priorities. Init vertical prio = 7 . 
     	priorityVerticalTiles = (12 - maxX)/7; //if 0 or negative need to go up
-    	System.out.println("maxx =" + maxX + "prioV" + (12 - maxX)/7);
-    	priorityHorizontalTiles =(posGoldY - closestY)/posGoldY ; //if negative then we are too on the right
-    		//priorityTurns ??
+  //System.out.println("vertical  "+priorityVerticalTiles);
+    	priorityHorizontalTiles =(posGoldY - closestY)/posGoldY ; //if negative then we are too on the right //really weak impact : less than 0.2
+   //System.out.println("horiz  "+priorityHorizontalTiles + "closest y " + closestY);
+    	
+    	//priorityTurns ??
     	double maxHeuristic =1000;
     	for (SaboteurMove move : moves) {
     		
     		if(!(move.getCardPlayed() instanceof SaboteurTile)) continue;
     		SaboteurTile tile = (SaboteurTile) move.getCardPlayed();
-    	
+    		if(Arrays.asList(tilesOkToDiscard).contains(tile.getIdx())) continue; //we dont want to block path
+    		
+    		if(Arrays.asList(verticTiles).contains(tile.getIdx())) isVertic=0.2;
+    		if(Arrays.asList(horizTiles).contains(tile.getIdx())) isHoriz=0.2;
+    		
+    		if(priorityVerticalTiles<0.5) priorityHorizontalTiles*=2; //should be prioTurns here
     		
     		int[] pos = move.getPosPlayed();
-    		//smaller the better ?
-    		double h = (12-pos[0])*priorityVerticalTiles + (posGoldY-pos[1])*priorityHorizontalTiles;
-    		System.out.println("vertical  "+priorityVerticalTiles+" h " + h);
-    		if(h< maxHeuristic) path = move;
+    		//smaller the better 
+    		double h = (12-pos[0])*priorityVerticalTiles*isVertic + (posGoldY-pos[1])*priorityHorizontalTiles*isHoriz;
+   //System.out.println(" h " + h);
+    		if(h< maxHeuristic ) {
+    			path = move;
+    			maxHeuristic = h;
+    System.out.println(" h " + h);
+    		}
     	}
+    	//chose drop if h>0.6 ??
     	return path;
     }
     
