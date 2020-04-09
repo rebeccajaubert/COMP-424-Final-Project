@@ -15,7 +15,10 @@ import Saboteur.SaboteurMove;
 /** A player file submitted by a student. */
 public class StudentPlayer extends SaboteurPlayer {
 	private boolean goldFound = false;
-
+	private SaboteurTile[][] currentBoard;
+	
+	
+	
 	/**
 	 * You must modify this constructor to return your student number. This is
 	 * important, because this is what the code that runs the competition uses to
@@ -52,7 +55,10 @@ public class StudentPlayer extends SaboteurPlayer {
 		//if malus on us
 		if(boardState.getNbMalus(boardState.getTurnPlayer()) > 0) {
 			SaboteurMove testnull = MyTools.counterMalus(moves);
-			if(testnull!=null) goodmove=testnull;
+			if(testnull!=null) {
+				goodmove=testnull;
+				return goodmove;
+			}
 		}
 
 
@@ -60,7 +66,12 @@ public class StudentPlayer extends SaboteurPlayer {
 
 		
 		// /!\ need to handle if destroy card is played in middle of our path !! NB: STRATEGY TO MAKE THE OTHER ROBOT FAIL
+		//IDEA : ONLY PLACE TILE IF CONNECTED TO ENTRANCE --> MAYBE THIS IS MANDATORY ANYWAY ???
 		// board.isLegal if destroy was played
+		//SaboteurTile[][] afterOpponentBoard = boardState.getHiddenBoard();
+		//SAVE BOARD
+		//currentBoard = boardState.getHiddenBoard(); //WHERE ?
+
 
 
 
@@ -71,13 +82,13 @@ public class StudentPlayer extends SaboteurPlayer {
 			if(testnull!=null) {
 				goodmove=testnull;
 			}
-			else {
+			else { 
 				//goodmove = MyTools.chooseDrop(myCurrentHand, playerid); // HERE should be GoDown from gotonugget()
-				goodmove= MyTools.goToNugget(moves, posGoldY); //here gold default to 5
+				goodmove= MyTools.goToNugget(moves, posGoldY,boardState); //here gold default to 5
 			}
 		}
 		else {
-			SaboteurMove path = MyTools.goToNugget(moves, posGoldY);
+			SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState);
 			if(path != null) {
 				if(!boardState.isLegal(path)) System.out.println("BUG");
 				goodmove= path;
@@ -97,6 +108,7 @@ public class StudentPlayer extends SaboteurPlayer {
 
 			// Return your move to be processed by the server.
 			
+		
 		
 		if(goodmove == null) {
 			System.out.println("REAL BAD LUCK");

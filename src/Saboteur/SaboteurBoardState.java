@@ -280,6 +280,7 @@ public class SaboteurBoardState extends BoardState {
         }
 
         return this.intBoard; }
+    
     public int[][] getHiddenIntBoard() {
         //update the int board, and provide it to the player with the hidden objectives set at EMPTY.
         //Note that this function is available to the player.
