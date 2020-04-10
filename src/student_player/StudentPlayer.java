@@ -4,10 +4,14 @@ import boardgame.Move;
 
 import Saboteur.SaboteurPlayer;
 import Saboteur.cardClasses.SaboteurCard;
+import Saboteur.cardClasses.SaboteurDestroy;
+import Saboteur.cardClasses.SaboteurDrop;
+import Saboteur.cardClasses.SaboteurMalus;
 import Saboteur.cardClasses.SaboteurTile;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
 
 import Saboteur.SaboteurBoardState;
 import Saboteur.SaboteurMove;
@@ -15,7 +19,7 @@ import Saboteur.SaboteurMove;
 /** A player file submitted by a student. */
 public class StudentPlayer extends SaboteurPlayer {
 	private boolean goldFound = false;
-	private SaboteurTile[][] currentBoard;
+	private int countMalus= 0;
 	
 	
 	
@@ -43,7 +47,7 @@ public class StudentPlayer extends SaboteurPlayer {
 
 		//check if gold found 
 		SaboteurTile[][] boardTiles =boardState.getHiddenBoard(); //board 14x14 but only   
-		if(boardTiles[12][3].getIdx().equals("nugget")) {goldFound=true; posGoldY = 3; System.out.println("SHOULD NOT SEARCH ANYMORE GOLD");} // BUG IT DOESNT CHANGE -> it still search for middle
+		if(boardTiles[12][3].getIdx().equals("nugget")) {goldFound=true; posGoldY = 3; } 
 		else if(boardTiles[12][5].getIdx().equals("nugget")) { goldFound=true; posGoldY = 5;}  
 		else if( boardTiles[12][7].getIdx().equals("nugget")) {goldFound=true; posGoldY=7; } //should never get here
 		else if(!(boardTiles[12][3].getIdx().equals("8")) && !(boardTiles[12][5].getIdx().equals("8"))) { goldFound=true; posGoldY=7; }
@@ -57,6 +61,7 @@ public class StudentPlayer extends SaboteurPlayer {
 			SaboteurMove testnull = MyTools.counterMalus(moves);
 			if(testnull!=null) {
 				goodmove=testnull;
+				MyTools.updateCardNumberAvailable();
 				return goodmove;
 			}
 		}
@@ -73,27 +78,50 @@ public class StudentPlayer extends SaboteurPlayer {
 		//currentBoard = boardState.getHiddenBoard(); //WHERE ?
 
 
+		
+		//TODO if in row x =12 ==> go to adjacent hidden objective
 
 
 		//1st find gold
 		//I dont know how to account for map cards played by adversary
 		if(!goldFound) { 
-			SaboteurMove testnull = MyTools.searchGold(moves,boardTiles);
-			if(testnull!=null) {
-				goodmove=testnull;
+			SaboteurMove mapMove = MyTools.searchGold(moves,boardTiles);
+			if(mapMove!=null) {
+				goodmove=mapMove;
 			}
 			else { 
 				//goodmove = MyTools.chooseDrop(myCurrentHand, playerid); // HERE should be GoDown from gotonugget()
-				goodmove= MyTools.goToNugget(moves, posGoldY,boardState); //here gold default to 5
+				SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState); //here gold default to 5
+				if(path != null) {
+					goodmove= path;
+				}
+				else {
+					if(myCurrentHand.contains(new SaboteurDestroy())) {
+		    			MyTools.destroyBlockingTile(moves);
+		    		}
+					goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
+
+				}
 			}
 		}
 		else {
+			//play malus if in hand DOES METHOD CONTAIN WORKS?
+			if(myCurrentHand.contains(new SaboteurMalus())) {
+				MyTools.updateCardNumberAvailable();
+				System.out.println("MALUS OK");
+				return new SaboteurMove(new SaboteurMalus(), 0, 0, playerid);
+			}
+			
 			SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState);
 			if(path != null) {
-				if(!boardState.isLegal(path)) System.out.println("BUG");
 				goodmove= path;
 			}
-			else { goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
+			else { 
+				if(myCurrentHand.contains(new SaboteurDestroy())) {
+	    			MyTools.destroyBlockingTile(moves);
+	    		}
+				
+				goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
 
 			}
 		}
@@ -112,8 +140,10 @@ public class StudentPlayer extends SaboteurPlayer {
 		
 		if(goodmove == null) {
 			System.out.println("REAL BAD LUCK");
+			MyTools.updateCardNumberAvailable();
 			return myMove;
 		}
+		MyTools.updateCardNumberAvailable();
 		return goodmove;
 	}
 }
