@@ -19,13 +19,13 @@ import boardgame.Move;
 //NB: FOR NOW I FORGET VERIFYLEGIT AND ISLEGAL
 public class MyTools {
 	
-    private static double deckAvail = 41; //55-7-7
+    private static double deckAvail = 41; //55-7-7 //TODO take deck size bc may change
     //dont put 8 to prioritize more restrictive tiles
     private static String[] tilesOkToDiscard = {"1","2","2_flip","3","3_flip","4","4_flip","11","11_flip","12","12_flip","13","14","14_flip","15"};
 	private static String[] verticTiles = {"0","6","6_flip"};
 	private static String[] horizTiles = {"9","9_flip","10"};
 	private static String[] turnLeftTiles = {"5","5_flip","6"};
-	private static String[] turnRightTiles = {"6_flip","7"};
+	private static String[] turnRightTiles = {"5","6_flip","7"};
 	//private static String[] turnDownTiles = {"6","6_flip","7_flip","9","8"};
 	//private static String[] turnUpTiles = {"9_flip","8"};
 	
@@ -181,9 +181,9 @@ public class MyTools {
 
     public static SaboteurMove destroyBlockingTile(SaboteurTile[][] boardTiles, int playerid) {
     	System.out.println("DESTROY BLOCKING");
-    	for(int i=0;i<14;i++) {
-    		if(boardTiles[11][i] != null ) { 
-    			if(!(Arrays.asList(verticTiles).contains( boardTiles[11][i].getIdx())) && !(boardTiles[11][i].getIdx().contentEquals("8")) ) { //there is a blocking tile since not vertical
+    	for(int i=3;i<=7;i=i+2) { //add condition on top of hidden card
+    		if(boardTiles[11][i] != null ) {  
+    			if(  !(Arrays.asList(verticTiles).contains( boardTiles[11][i].getIdx())) && !(boardTiles[11][i].getIdx().contentEquals("8")) ) { //there is a blocking tile since not vertical
     				return new SaboteurMove(new SaboteurDestroy(),11,i,playerid);}
     		}
     		if(boardTiles[12][i] != null) {
@@ -227,24 +227,24 @@ public class MyTools {
     						if(isConnectedToEntrance(board, around[i])) {
     							interestingMoves.add(move); 
     							xs.add(coord[0]);
-    				    		ys.add(coord[1]);
+    							ys.add(coord[1]);
     							break;
     						}
     					}
     				}
     			}
     		}
-    		
-  //System.out.println("coord " + coord[0] + " " + coord[1]);
+
+    		//System.out.println("coord " + coord[0] + " " + coord[1]);
     	}
-    	
+
     	//check there is at least 1 good tile
     	if(interestingMoves.isEmpty()) {
     		System.err.println("Better to drop");
     		return null;
     	}
-    	
-    	
+
+
     	double priorityVerticalTiles;
     	double priorityHorizontalTiles;
     	double priorityTurnLeft=1; 
@@ -252,46 +252,58 @@ public class MyTools {
     	double isVertic = 1; double isHoriz = 1; double isTurn = 1;
     	double maxX=0;
     	double closestY=0;
+
+    	if(xs.isEmpty()) System.out.println("HOWWWWWWWWWWWWWWWWWw");
+    	if(xs.size() == 1) maxX= xs.get(0);
+    	else{maxX= Collections.max(xs);}
     	
-    	assert xs.isEmpty() == false;
-    	maxX= Collections.max(xs);
+//    	try{
+//    		maxX= Collections.max(xs);
+//    	}
+//    	catch (Exception e) {
+//    		System.err.println("NO MAX POSSIBLE ??");
+//			return null;
+//    	}
+    	
     	closestY= ys.stream().min( (y1,y2) -> Math.abs(y1-posGoldY) -  Math.abs(y2-posGoldY)).get();
     	//closestY = (Double) closestY; //necessary for division
-    	
+
     	//set priorities 
     	priorityVerticalTiles = Math.abs(1-maxX/12); 
- System.out.println("vertical  "+priorityVerticalTiles );
+    	// System.out.println("vertical  "+priorityVerticalTiles );
     	priorityHorizontalTiles = Math.abs(1 - closestY/posGoldY ); 
- System.out.println("horiz  "+priorityHorizontalTiles );
+    	//System.out.println("horiz  "+priorityHorizontalTiles );
 
-    	
-   
-    	
+
+
+
     	double maxHeuristic = 4* deckAvail/41 ; 	//so that if not enough a good move then do a drop it's better ==> acceptance decrease as game go on (NOT SURE GOOD)
-//   System.out.println("maxHeuri "+ maxHeuristic);
-   
-   		//double maxHeuristic =0; //is it better than dropping even if low?
-   
+      System.out.println("maxHeuri "+ maxHeuristic);
+
+    	//double maxHeuristic =0; //is it better than dropping even if low?
+
     	//FOR ME TESTING:
     	//int[] coordi = {0,0};
-    	
+
     	for (SaboteurMove move : interestingMoves) {
     		SaboteurTile tile = (SaboteurTile) move.getCardPlayed();
-    		
+
     		if(Arrays.asList(verticTiles).contains(tile.getIdx())) isVertic= 2;
     		if(Arrays.asList(horizTiles).contains(tile.getIdx())) isHoriz= 2;
-    		
-    		
+
+
     		//TODO if 0 or negative need to go up
-    		
-    //from before when wanted small: 	if(priorityVerticalTiles<0.5) priorityHorizontalTiles*=2; //should be prioTurns here
-    		
+
+    		//from before when wanted small: 	if(priorityVerticalTiles<0.5) priorityHorizontalTiles*=2; //should be prioTurns here
+
     		int[] pos = move.getPosPlayed();
-    		
+
     		if(pos[0]==11) {
-       			if((posGoldY - closestY)<0 && (Arrays.asList(turnLeftTiles).contains(tile.getIdx()) || tile.getIdx().equals("8") )) priorityTurnLeft = 4;
-       			else if((posGoldY - closestY)>0 && ( Arrays.asList(turnRightTiles).contains(tile.getIdx()) || tile.getIdx().equals("8")   )){priorityTurnRight= 4; }
-       			else if ( isVertic==2 || tile.getIdx().equals("8")) {priorityVerticalTiles = 10;} //isvertic = 2 only if it s a vertic tile
+    			if((posGoldY - closestY)<0 && (Arrays.asList(turnLeftTiles).contains(tile.getIdx()) 
+    					|| tile.getIdx().equals("8") )) priorityTurnLeft = 4;
+    			else if((posGoldY - closestY)>0 && ( Arrays.asList(turnRightTiles).contains(tile.getIdx()) 
+    					|| tile.getIdx().equals("8")   )){priorityTurnRight= 4; }
+    			else if ( isVertic==2 || tile.getIdx().equals("8")) {priorityVerticalTiles = 10;} //isvertic = 2 only if it s a vertic tile
     		}
     		if(pos[0]==12 && ( isHoriz==2 || tile.getIdx().equals("8")) ) { //ishoriz = 2 only if it s a horiz tile
     			priorityHorizontalTiles=10;
@@ -300,25 +312,26 @@ public class MyTools {
     		//int y = posGoldY-pos[1]>= -1 && posGoldY-pos[1]<= 1 ? 5 : 2; //if in horizontal interval then increase prob
     		double testNotZero = Math.abs(posGoldY - pos[1])==0? 1.5 : Math.abs(posGoldY - pos[1]);
     		double y = posGoldY - testNotZero;
-    		
+
     		//bigger the better  MATH.ABS ??
     		double h = x *priorityVerticalTiles*isVertic   +   y *priorityHorizontalTiles*isHoriz*priorityTurnRight*priorityTurnLeft;
-   
+
     		//can be made more efficient
     		if(tile.getIdx().equals("8")) h=4*(x+y);
-    		
-   System.out.println("NAME "+tile.getName()+" pos "+ pos[0]+" "+ pos[1]+" h " + h);
+
+    	System.out.println("NAME "+tile.getName()+" pos "+ pos[0]+" "+ pos[1]+" h " + h);
     		if(h> maxHeuristic ) {
-    			
+
     			if(tile.getIdx().equals("7") &&  boardTiles[pos[0]][pos[1]+1] !=null) { System.out.println("it does catch it 7");continue;} //it would go up : adjacent right tile is connected
-    			if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
+    			else if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
+    			else if((tile.getIdx().equals("10")||tile.getIdx().equals("9_flip")) && pos[0]==11 && (pos[1]==3||pos[1]==5||pos[1]==7) ){ System.out.println("it does catch blocking tiles before hidden");continue;}
 
     			path = move;
     			maxHeuristic = h;
     		}
     	}
-    
-    	
+
+
     	//TODO check if tile 8 still played when needed
     	return path;
     }

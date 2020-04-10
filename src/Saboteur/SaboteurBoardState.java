@@ -861,7 +861,7 @@ public class SaboteurBoardState extends BoardState {
                     //get the target position in 0-1 coordinate
                     int[] targetPos2 = {targetPos[0]*3+1, targetPos[1]*3+1};
                     if (cardPath(originTargets2, targetPos2, false)) {
-                        System.out.println("0-1 path found");
+                     //   System.out.println("0-1 path found");
 
                         this.hiddenRevealed[currentTargetIdx] = true;
                         this.player1hiddenRevealed[currentTargetIdx] = true;
@@ -874,7 +874,7 @@ public class SaboteurBoardState extends BoardState {
                 }
             }
             else{
-                System.out.println("hidden already revealed");
+             //   System.out.println("hidden already revealed");
                 atLeastOnefound = true;
             }
         }

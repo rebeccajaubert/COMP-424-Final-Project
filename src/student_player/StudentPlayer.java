@@ -58,7 +58,7 @@ public class StudentPlayer extends SaboteurPlayer {
 
 
 		//if malus on us
-		if(boardState.getNbMalus(boardState.getTurnPlayer()) > 0) {
+		if(boardState.getNbMalus(boardState.getTurnPlayer()) > 0) {								System.out.println("1");
 			SaboteurMove repost = MyTools.counterMalus(myCurrentHand, boardTiles, playerid);
 			if(repost != null) {goodmove = repost;}
 			else { goodmove = MyTools.chooseDrop(myCurrentHand, playerid); }
@@ -67,7 +67,7 @@ public class StudentPlayer extends SaboteurPlayer {
 				return goodmove;
 			}
 			else { //REAL BAD LUCK
-				System.out.println("FUCK MALUS");
+				System.out.println("FUCK MALUS");											System.out.println("2");
 				//TODO : a 2nd less strict choose drop
 				return new SaboteurMove(new SaboteurDrop(),0,0,playerid);
 			}
@@ -76,6 +76,7 @@ public class StudentPlayer extends SaboteurPlayer {
 
 		//if enemy is too close to goal state then should go here
 
+																								System.out.println("CHOOSEMOVE IS NORMALLY LAUNCHED");
 		
 		// /!\ need to handle if destroy card is played in middle of our path !! NB: STRATEGY TO MAKE THE OTHER ROBOT FAIL
 		//IDEA : ONLY PLACE TILE IF CONNECTED TO ENTRANCE --> MAYBE THIS IS MANDATORY ANYWAY ???
@@ -92,18 +93,18 @@ public class StudentPlayer extends SaboteurPlayer {
 		//1st find gold
 		//I dont know how to account for map cards played by adversary
 		if(!goldFound) { 
-			SaboteurMove mapMove = MyTools.searchGold(moves,boardTiles);
+			SaboteurMove mapMove = MyTools.searchGold(moves,boardTiles);						System.out.println("3");
 			if(mapMove!=null) {
 				goodmove=mapMove;
 			}
-			else { 
+			else {																					 System.out.println("4");
 				//goodmove = MyTools.chooseDrop(myCurrentHand, playerid); // HERE should be GoDown from gotonugget()
-				SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState); //here gold default to 5
+				SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState); //here gold default to 5		
 				if(path != null) {
 					goodmove= path;
 				}
-				else {
-					if(myCurrentHand.contains(new SaboteurDestroy())) {
+				else {																					System.out.println("5");
+					if(myCurrentHand.contains(new SaboteurDestroy())) {										System.out.println("6");
 		    			SaboteurMove canDestroy = MyTools.destroyBlockingTile(boardTiles,playerid);
 		    			if(canDestroy != null) goodmove= canDestroy;		    			
 					}
@@ -114,18 +115,18 @@ public class StudentPlayer extends SaboteurPlayer {
 		}
 		else {
 			//play malus if in hand DOES METHOD CONTAIN WORKS?
-			if(myCurrentHand.contains(new SaboteurMalus())) {
+			if(myCurrentHand.contains(new SaboteurMalus())) {												
 				MyTools.updateCardNumberAvailable();
-				System.out.println("MALUS OK");
+																									System.out.println("MALUS OK");
 				return new SaboteurMove(new SaboteurMalus(), 0, 0, playerid);
 			}
-			
+																										System.out.println("7");
 			SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState);
 			if(path != null) {
 				goodmove= path;
 			}
-			else { 
-				if(myCurrentHand.contains(new SaboteurDestroy())) {
+			else { 																							System.out.println("8");
+				if(myCurrentHand.contains(new SaboteurDestroy())) {												System.out.println("9");
 					SaboteurMove canDestroy = MyTools.destroyBlockingTile(boardTiles,playerid);
 	    			if(canDestroy != null) goodmove= canDestroy;
 	    		}
