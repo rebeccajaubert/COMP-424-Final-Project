@@ -46,7 +46,8 @@ public class StudentPlayer extends SaboteurPlayer {
 		int posGoldY = 5;
 
 		//check if gold found 
-		SaboteurTile[][] boardTiles =boardState.getHiddenBoard(); //board 14x14 but only   
+		SaboteurTile[][] boardTiles =boardState.getHiddenBoard(); //board 14x14   
+		
 		if(boardTiles[12][3].getIdx().equals("nugget")) {goldFound=true; posGoldY = 3; } 
 		else if(boardTiles[12][5].getIdx().equals("nugget")) { goldFound=true; posGoldY = 5;}  
 		else if( boardTiles[12][7].getIdx().equals("nugget")) {goldFound=true; posGoldY=7; } //should never get here
@@ -58,11 +59,17 @@ public class StudentPlayer extends SaboteurPlayer {
 
 		//if malus on us
 		if(boardState.getNbMalus(boardState.getTurnPlayer()) > 0) {
-			SaboteurMove testnull = MyTools.counterMalus(moves);
-			if(testnull!=null) {
-				goodmove=testnull;
+			SaboteurMove repost = MyTools.counterMalus(myCurrentHand, boardTiles, playerid);
+			if(repost != null) {goodmove = repost;}
+			else { goodmove = MyTools.chooseDrop(myCurrentHand, playerid); }
+			if(goodmove!=null) {
 				MyTools.updateCardNumberAvailable();
 				return goodmove;
+			}
+			else { //REAL BAD LUCK
+				System.out.println("FUCK MALUS");
+				//TODO : a 2nd less strict choose drop
+				return new SaboteurMove(new SaboteurDrop(),0,0,playerid);
 			}
 		}
 
@@ -97,9 +104,10 @@ public class StudentPlayer extends SaboteurPlayer {
 				}
 				else {
 					if(myCurrentHand.contains(new SaboteurDestroy())) {
-		    			MyTools.destroyBlockingTile(moves);
-		    		}
-					goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
+		    			SaboteurMove canDestroy = MyTools.destroyBlockingTile(boardTiles,playerid);
+		    			if(canDestroy != null) goodmove= canDestroy;		    			
+					}
+					if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
 
 				}
 			}
@@ -118,11 +126,10 @@ public class StudentPlayer extends SaboteurPlayer {
 			}
 			else { 
 				if(myCurrentHand.contains(new SaboteurDestroy())) {
-	    			MyTools.destroyBlockingTile(moves);
+					SaboteurMove canDestroy = MyTools.destroyBlockingTile(boardTiles,playerid);
+	    			if(canDestroy != null) goodmove= canDestroy;
 	    		}
-				
-				goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
-
+				if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
 			}
 		}
 

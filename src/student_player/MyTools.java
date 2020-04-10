@@ -29,6 +29,7 @@ public class MyTools {
 	//private static String[] turnDownTiles = {"6","6_flip","7_flip","9","8"};
 	//private static String[] turnUpTiles = {"9_flip","8"};
 	
+	
 	public static boolean isConnectedToEntrance(SaboteurBoardState boardState, int[] targetPos) {
 		ArrayList<int[]> originTargets = new ArrayList<>();
 		originTargets.add(new int[]{5,5}); //entrance
@@ -149,45 +150,50 @@ public class MyTools {
     //If malus on us then play bonus card 
     //or destroy or malus if opponent too close goal
     //or drop card to get bonus if out of 4 still available
-    public static SaboteurMove counterMalus(ArrayList<SaboteurMove> moves) {
+    public static SaboteurMove counterMalus(ArrayList<SaboteurCard> mycurrenthand,SaboteurTile[][] boardTiles, int playerid) {
     	SaboteurMove noGoodMove = null;
     	int destroys =0; int maluses=0;
     	SaboteurMove destroyMove = null;
     	SaboteurMove malusMove= null;
     	
     	
-    	for (SaboteurMove move : moves) {
-			if(move.getCardPlayed() instanceof SaboteurBonus) {
-				SaboteurMove bonusSaboteurMove = move;
-				return bonusSaboteurMove;
+    	for (SaboteurCard card : mycurrenthand) {
+			if(card instanceof SaboteurBonus) {
+				return new SaboteurMove((new SaboteurBonus()),0,0,playerid);
 			}
-			if(move.getCardPlayed() instanceof SaboteurDestroy) {
-				System.out.println("Counter malus "+move.toPrettyString());
-					if(destroys==0) {
-				destroys++;
-				System.out.println("chosen destroy "+move.toPrettyString());
-				destroyMove= move;
-			}}
-			if(move.getCardPlayed() instanceof SaboteurMalus && maluses==0) {
+			if(card instanceof SaboteurDestroy && destroys==0) {
+					destroys++;
+					destroyMove = destroyBlockingTile(boardTiles, playerid);
+			}
+			if(card instanceof SaboteurMalus && maluses==0) {
 				maluses++;
-				malusMove = move;
+				int opponentId = (playerid+1)%2;
+				malusMove = new SaboteurMove((new SaboteurMalus()),0,0,opponentId);
 			}
 		}
+    	if(maluses!=0) return malusMove;
+    	else if(destroys!=0 && destroyMove!=null) return destroyMove;
     	
-    	if(destroys!=0) return destroyMove;
-    	else if(maluses!=0) return malusMove;
     	
     	return noGoodMove;
     }
 
 
-    public static void destroyBlockingTile(ArrayList<SaboteurMove> moves) {
+    public static SaboteurMove destroyBlockingTile(SaboteurTile[][] boardTiles, int playerid) {
     	System.out.println("DESTROY BLOCKING");
-    	for(SaboteurMove move : moves) {
-    		if(move.getCardPlayed() instanceof SaboteurDestroy) {
-    			System.out.println(move.toPrettyString());
+    	for(int i=0;i<14;i++) {
+    		if(boardTiles[11][i] != null ) { 
+    			if(!(Arrays.asList(verticTiles).contains( boardTiles[11][i].getIdx())) && !(boardTiles[11][i].getIdx().contentEquals("8")) ) { //there is a blocking tile since not vertical
+    				return new SaboteurMove(new SaboteurDestroy(),11,i,playerid);}
+    		}
+    		if(boardTiles[12][i] != null) {
+    			if(!(Arrays.asList(horizTiles).contains( boardTiles[12][i].getIdx()))
+    			&& !(boardTiles[11][i].getIdx().contentEquals("8")) )  { //there is a blocking tile since not horizontal
+    				return new SaboteurMove(new SaboteurDestroy(),12,i,playerid);}
     		}
     	}
+    	
+    	return null;
     }
     
     
@@ -234,7 +240,7 @@ public class MyTools {
     	
     	//check there is at least 1 good tile
     	if(interestingMoves.isEmpty()) {
-    		System.err.println("NO why no move");
+    		System.err.println("Better to drop");
     		return null;
     	}
     	
@@ -247,23 +253,27 @@ public class MyTools {
     	double maxX=0;
     	double closestY=0;
     	
+    	assert xs.isEmpty() == false;
     	maxX= Collections.max(xs);
     	closestY= ys.stream().min( (y1,y2) -> Math.abs(y1-posGoldY) -  Math.abs(y2-posGoldY)).get();
     	//closestY = (Double) closestY; //necessary for division
     	
     	//set priorities 
-    	priorityVerticalTiles = 1-maxX/12; 
-  System.out.println("vertical  "+priorityVerticalTiles + " maxX " + maxX);
+    	priorityVerticalTiles = Math.abs(1-maxX/12); 
+ System.out.println("vertical  "+priorityVerticalTiles );
     	priorityHorizontalTiles = Math.abs(1 - closestY/posGoldY ); 
-   System.out.println("horiz  "+priorityHorizontalTiles + " closest y " + closestY);
+ System.out.println("horiz  "+priorityHorizontalTiles );
 
     	
    
     	
-    	double maxHeuristic = 4* deckAvail/41 > 1.5 ? 4*deckAvail/41 : 1.9; 	//so that if not enough a good move then do a drop it's better ==> acceptance decrease as game go on (NOT SURE GOOD)
-   System.out.println("maxHeuri "+ maxHeuristic);
+    	double maxHeuristic = 4* deckAvail/41 ; 	//so that if not enough a good move then do a drop it's better ==> acceptance decrease as game go on (NOT SURE GOOD)
+//   System.out.println("maxHeuri "+ maxHeuristic);
+   
+   		//double maxHeuristic =0; //is it better than dropping even if low?
+   
     	//FOR ME TESTING:
-    	int[] coordi = {0,0};
+    	//int[] coordi = {0,0};
     	
     	for (SaboteurMove move : interestingMoves) {
     		SaboteurTile tile = (SaboteurTile) move.getCardPlayed();
@@ -295,24 +305,19 @@ public class MyTools {
     		double h = x *priorityVerticalTiles*isVertic   +   y *priorityHorizontalTiles*isHoriz*priorityTurnRight*priorityTurnLeft;
    
     		//can be made more efficient
-    		if(tile.getIdx().equals("8")) h=4;
+    		if(tile.getIdx().equals("8")) h=4*(x+y);
     		
    System.out.println("NAME "+tile.getName()+" pos "+ pos[0]+" "+ pos[1]+" h " + h);
     		if(h> maxHeuristic ) {
     			
-    			if(tile.getIdx().equals("7") &&  boardTiles[pos[0]][pos[1]+1] !=null) continue; //it would go up : adjacent right tile is connected
-    			if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null) continue; //it would go up : adjacent left tile is connected
+    			if(tile.getIdx().equals("7") &&  boardTiles[pos[0]][pos[1]+1] !=null) { System.out.println("it does catch it 7");continue;} //it would go up : adjacent right tile is connected
+    			if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
 
     			path = move;
     			maxHeuristic = h;
-    			coordi = pos; //DELETE
-   // System.out.println(" h " + h);
     		}
     	}
-    	if(path != null) {
-    	System.out.println("chosen "+ path.getCardPlayed().getName() +" H " + maxHeuristic + "coordi " + coordi[0] + " " + coordi[1]);
-    	//System.out.println(isConnectedToEntrance(board, coordi));
-    	}
+    
     	
     	//TODO check if tile 8 still played when needed
     	return path;

@@ -848,7 +848,7 @@ public class SaboteurBoardState extends BoardState {
             if(!this.hiddenRevealed[currentTargetIdx]) {  //verify that the current target has not been already discovered. Even if there is a destruction event, the target keeps being revealed!
 
                 if (cardPath(originTargets, targetPos, true)) { //checks that there is a cardPath
-                    System.out.println("card path found"); //todo remove
+                 //   System.out.println("card path found"); //todo remove
                  //   this.printBoard();
                     //next: checks that there is a path of ones.
                     ArrayList<int[]> originTargets2 = new ArrayList<>();
@@ -869,7 +869,7 @@ public class SaboteurBoardState extends BoardState {
                         atLeastOnefound =true;
                     }
                     else{
-                        System.out.println("0-1 path was not found");
+                       // System.out.println("0-1 path was not found");
                     }
                 }
             }
