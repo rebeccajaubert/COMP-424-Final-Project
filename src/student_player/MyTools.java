@@ -28,6 +28,7 @@ public class MyTools {
 	private static String[] turnRightTiles = {"5","6_flip","7"};
 	//private static String[] turnDownTiles = {"6","6_flip","7_flip","9","8"};
 	//private static String[] turnUpTiles = {"9_flip","8"};
+	private static double maxX=0; //to look for destroy more efficiently ==> if after 1 turn maxX decrease, possibly a blocking tile has been played
 	
 	
 	public static boolean isConnectedToEntrance(SaboteurBoardState boardState, int[] targetPos) {
@@ -118,6 +119,7 @@ public class MyTools {
     public static SaboteurMove chooseDrop(ArrayList<SaboteurCard> myCurrentHand,int playerid) { 
     	SaboteurMove drop = null;
     	int nbBonus=0;
+    	int nbDestroy=0;
     	int i = 0; 
     	for (SaboteurCard card : myCurrentHand) {
     		if(card instanceof SaboteurMap) return new SaboteurMove(new SaboteurDrop(),i,0,playerid);
@@ -125,8 +127,9 @@ public class MyTools {
     			SaboteurTile tile = (SaboteurTile) card;
     			if(Arrays.asList(tilesOkToDiscard).contains(tile.getIdx()) ) return new SaboteurMove(new SaboteurDrop(),i,0,playerid);
     		}
-    		if(card instanceof SaboteurMalus)  return new SaboteurMove(new SaboteurDrop(),i,0,playerid);
-    		if(card instanceof SaboteurBonus) {if(nbBonus>=2) { return new SaboteurMove(new SaboteurDrop(),i,0,playerid);} nbBonus++;}
+    		if(card instanceof SaboteurMalus)  return new SaboteurMove(new SaboteurMalus(),0,0,playerid);
+    		if(card instanceof SaboteurBonus) {if(nbBonus>=1) { return new SaboteurMove(new SaboteurDrop(),i,0,playerid);} nbBonus++; System.out.println("1 bonus ???");}
+    		if(card instanceof SaboteurDestroy) {if(nbDestroy>=2) {return new SaboteurMove(new SaboteurDrop(), i, 0, playerid);} }
     		i++;
     	}
     	
@@ -163,7 +166,7 @@ public class MyTools {
 			}
 			if(card instanceof SaboteurDestroy && destroys==0) {
 					destroys++;
-					destroyMove = destroyBlockingTile(boardTiles, playerid);
+					destroyMove = destroyBlockingTileCloseToGoal(boardTiles, playerid);
 			}
 			if(card instanceof SaboteurMalus && maluses==0) {
 				maluses++;
@@ -179,26 +182,57 @@ public class MyTools {
     }
 
 
-    public static SaboteurMove destroyBlockingTile(SaboteurTile[][] boardTiles, int playerid) {
+    public static SaboteurMove destroyBlockingTileCloseToGoal(SaboteurTile[][] boardTiles, int playerid) {
     	System.out.println("DESTROY BLOCKING");
     	for(int i=3;i<=7;i=i+2) { //add condition on top of hidden card
     		if(boardTiles[11][i] != null ) {  
     			if(  !(Arrays.asList(verticTiles).contains( boardTiles[11][i].getIdx())) && !(boardTiles[11][i].getIdx().contentEquals("8")) ) { //there is a blocking tile since not vertical
     				return new SaboteurMove(new SaboteurDestroy(),11,i,playerid);}
     		}
-    		if(boardTiles[12][i] != null) {
-    			if(!(Arrays.asList(horizTiles).contains( boardTiles[12][i].getIdx()))
-    			&& !(boardTiles[11][i].getIdx().contentEquals("8")) )  { //there is a blocking tile since not horizontal
-    				return new SaboteurMove(new SaboteurDestroy(),12,i,playerid);}
-    		}
     	}
+    	//case by case easier to implement
+    	if(boardTiles[12][2] != null) {
+			if(!(Arrays.asList(turnRightTiles).contains( boardTiles[12][2].getIdx()))
+			&& !(boardTiles[12][2].getIdx().contentEquals("8")) )  { //there is a blocking tile since not horizontal
+				return new SaboteurMove(new SaboteurDestroy(),12,2,playerid);}
+		}
+    	if(boardTiles[12][8] != null) {
+			if(!(Arrays.asList(turnLeftTiles).contains( boardTiles[12][8].getIdx()))
+			&& !(boardTiles[12][8].getIdx().contentEquals("8")) )  { //there is a blocking tile since not horizontal
+				return new SaboteurMove(new SaboteurDestroy(),12,8,playerid);}
+		}
+    	if(boardTiles[12][4] != null) {
+			if(( !(Arrays.asList(turnRightTiles).contains( boardTiles[12][4].getIdx())) || !(Arrays.asList(horizTiles).contains( boardTiles[12][4].getIdx())) || !(Arrays.asList(turnLeftTiles).contains( boardTiles[12][4].getIdx())) )
+			&& !(boardTiles[12][4].getIdx().contentEquals("8")) )  { //there is a blocking tile since not horizontal
+				return new SaboteurMove(new SaboteurDestroy(),12,4,playerid);}
+		}
+    	if(boardTiles[12][6] != null) {
+			if(( !(Arrays.asList(turnRightTiles).contains( boardTiles[12][6].getIdx())) || !(Arrays.asList(horizTiles).contains( boardTiles[12][6].getIdx())) || !(Arrays.asList(turnLeftTiles).contains( boardTiles[12][6].getIdx())) )
+			&& !(boardTiles[12][6].getIdx().contentEquals("8")) )  { //there is a blocking tile since not horizontal
+				return new SaboteurMove(new SaboteurDestroy(),12,6,playerid);}
+		}
     	
     	return null;
     }
     
+    public static SaboteurMove destroyBlockingMiddleBoard(SaboteurTile[][] boardTiles, int playerid) {
+    	System.out.println("DESTROY Middle");
+    	for(int x=10; x>=6; x--) { //we want to destroy deepest one usually
+    		for(int y=2;y<=8;y++) { //dont search too far to save computation (nb: x = rows. y= col)
+    			SaboteurTile tile = boardTiles[x][y];
+    			if( tile != null) {
+    				if(Arrays.asList(tilesOkToDiscard).contains(tile.getIdx())) return new SaboteurMove(new SaboteurDestroy(),x, y, playerid);
+    			}
+    			
+    		}
+    	}
+
+    	return null;
+    }
+
     
     // /!\ logically X and Y are inverted to our normal way of thinking
-    public static SaboteurMove goToNugget(ArrayList<SaboteurMove> moves, int posGoldY, SaboteurBoardState board) {
+    public static SaboteurMove goToNugget(ArrayList<SaboteurMove> moves, ArrayList<SaboteurCard> myHand, int posGoldY, SaboteurBoardState board) {
     	SaboteurMove path = null; //goal find a move that is descendent (closer to nugget : {12,y} w/ y=3,5,7)
     	ArrayList<SaboteurMove> interestingMoves = new ArrayList<>();
     	int[] entrance = {5,5};
@@ -207,7 +241,7 @@ public class MyTools {
     	ArrayList<Integer> xs = new ArrayList<Integer>();
     	ArrayList<Integer> ys = new ArrayList<Integer>();
     	
-    	//Consider only tiles, non blocking and connected to entrance
+    	//Consider only tiles, non blocking and connected to entrance AND not above entrance
     	for (SaboteurMove move : moves) {
     		if(!(move.getCardPlayed() instanceof SaboteurTile)) continue;    								
     		SaboteurTile tile = (SaboteurTile) move.getCardPlayed();
@@ -217,12 +251,13 @@ public class MyTools {
     		for(int i=0; i<4;i++) {
     			if (0 <= around[i][0] && around[i][0] < 14 && 0 <= around[i][1] && around[i][1] < 14) {  //check still in board
 
-    				if(Arrays.equals(around[i],entrance)) {
-    					//	System.out.println("OK WITH ENTRANCE");
+    				if(  coord[0]>=5 && Arrays.equals(around[i],entrance)) {
     					interestingMoves.add(move); 
+    					xs.add(coord[0]);
+    					ys.add(coord[1]);
     					break;
     				}
-    				if( boardTiles[around[i][0]][around[i][1]] != null) {
+    				if(coord[0]>=5 &&  boardTiles[around[i][0]][around[i][1]] != null ) {
     					if( !(Arrays.asList(tilesOkToDiscard).contains( boardTiles[around[i][0]][around[i][1]].getIdx() ) )) {
     						if(isConnectedToEntrance(board, around[i])) {
     							interestingMoves.add(move); 
@@ -250,28 +285,34 @@ public class MyTools {
     	double priorityTurnLeft=1; 
     	double priorityTurnRight=1;    	
     	double isVertic = 1; double isHoriz = 1; double isTurn = 1;
-    	double maxX=0;
+    	double prevMaxX=0;
     	double closestY=0;
+    	
+    	//to know if blocking tile (see up at defn maxX for more info)
+    	prevMaxX = maxX;
 
-    	if(xs.isEmpty()) System.out.println("HOWWWWWWWWWWWWWWWWWw");
+    	
     	if(xs.size() == 1) maxX= xs.get(0);
     	else{maxX= Collections.max(xs);}
     	
-//    	try{
-//    		maxX= Collections.max(xs);
-//    	}
-//    	catch (Exception e) {
-//    		System.err.println("NO MAX POSSIBLE ??");
-//			return null;
-//    	}
-    	
+    	if(prevMaxX>maxX) { // /!\ expensive search
+    		if(myHand.contains(new SaboteurDestroy())) {	
+    			SaboteurMove canDestroy = null;
+    			if(prevMaxX>10) canDestroy = destroyBlockingTileCloseToGoal(boardTiles,board.getTurnPlayer());
+    			else {
+    				canDestroy = destroyBlockingMiddleBoard(boardTiles, board.getTurnPlayer());
+    			}
+    			if(canDestroy != null) return canDestroy;
+    		}
+    	}
+
     	closestY= ys.stream().min( (y1,y2) -> Math.abs(y1-posGoldY) -  Math.abs(y2-posGoldY)).get();
     	//closestY = (Double) closestY; //necessary for division
 
     	//set priorities 
-    	priorityVerticalTiles = Math.abs(1-maxX/12); 
+    	priorityVerticalTiles = Math.abs(1-maxX/12)==0 ? 0.1 : Math.abs(1-maxX/12); 
     	// System.out.println("vertical  "+priorityVerticalTiles );
-    	priorityHorizontalTiles = Math.abs(1 - closestY/posGoldY ); 
+    	priorityHorizontalTiles = Math.abs(1 - closestY/posGoldY ) ==0 ? 0.1 :  Math.abs(1 - closestY/posGoldY ); 
     	//System.out.println("horiz  "+priorityHorizontalTiles );
 
 
@@ -298,17 +339,27 @@ public class MyTools {
 
     		int[] pos = move.getPosPlayed();
 
+    	
+    		if((posGoldY - closestY)<0 && (Arrays.asList(turnLeftTiles).contains(tile.getIdx()) 
+    				|| tile.getIdx().equals("8") )) 
+    														priorityTurnLeft = 4;
+    		else if((posGoldY - closestY)>0 && ( Arrays.asList(turnRightTiles).contains(tile.getIdx()) 
+    					|| tile.getIdx().equals("8")   ))
+    														{priorityTurnRight= 4; }
+    		
+    		
     		if(pos[0]==11) {
-    			if((posGoldY - closestY)<0 && (Arrays.asList(turnLeftTiles).contains(tile.getIdx()) 
-    					|| tile.getIdx().equals("8") )) priorityTurnLeft = 4;
-    			else if((posGoldY - closestY)>0 && ( Arrays.asList(turnRightTiles).contains(tile.getIdx()) 
-    					|| tile.getIdx().equals("8")   )){priorityTurnRight= 4; }
-    			else if ( isVertic==2 || tile.getIdx().equals("8")) {priorityVerticalTiles = 10;} //isvertic = 2 only if it s a vertic tile
+    			if(priorityTurnLeft==4) priorityTurnLeft*=2;
+    			else if(priorityTurnRight==4) priorityTurnRight*=2;
+    			else if ( isVertic==2 || tile.getIdx().equals("8")) {priorityVerticalTiles = 10;} 
     		}
+    			
     		if(pos[0]==12 && ( isHoriz==2 || tile.getIdx().equals("8")) ) { //ishoriz = 2 only if it s a horiz tile
     			priorityHorizontalTiles=10;
     		}
-    		double x = pos[0] > 12 ? 11 : pos[0]; //of tile is past objective set prio as is line 11 
+    		
+    		//double x = pos[0] > 12 ? 11 : pos[0]; //of tile is past objective set prio as is line 11 
+    		double x = pos[0];
     		//int y = posGoldY-pos[1]>= -1 && posGoldY-pos[1]<= 1 ? 5 : 2; //if in horizontal interval then increase prob
     		double testNotZero = Math.abs(posGoldY - pos[1])==0? 1.5 : Math.abs(posGoldY - pos[1]);
     		double y = posGoldY - testNotZero;
@@ -322,9 +373,12 @@ public class MyTools {
     	System.out.println("NAME "+tile.getName()+" pos "+ pos[0]+" "+ pos[1]+" h " + h);
     		if(h> maxHeuristic ) {
 
-    			if(tile.getIdx().equals("7") &&  boardTiles[pos[0]][pos[1]+1] !=null) { System.out.println("it does catch it 7");continue;} //it would go up : adjacent right tile is connected
-    			else if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
-    			else if((tile.getIdx().equals("10")||tile.getIdx().equals("9_flip")) && pos[0]==11 && (pos[1]==3||pos[1]==5||pos[1]==7) ){ System.out.println("it does catch blocking tiles before hidden");continue;}
+    			if(tile.getIdx().equals("7") &&  boardTiles[pos[0]][pos[1]+1] != null 
+    					&& (pos[0]!=12 && (pos[1]!=7||pos[1]!=5||pos[1]!=3) )) { System.out.println("it does catch it 7");continue;} //it would go up : adjacent right tile is connected
+    			else if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null
+    					&& (pos[0]!=12 && (pos[1]!=7||pos[1]!=5||pos[1]!=3)) ) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
+    			else if((tile.getIdx().equals("10")||tile.getIdx().equals("9_flip")
+    					&& (pos[0]!=12 && (pos[1]!=7||pos[1]!=5||pos[1]!=3)) ) && pos[0]==11 && (pos[1]==3||pos[1]==5||pos[1]==7) ){ System.out.println("it does catch blocking tiles before hidden");continue;}
 
     			path = move;
     			maxHeuristic = h;
