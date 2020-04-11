@@ -26,7 +26,7 @@ public class MyTools {
 	private static String[] horizTiles = {"9","9_flip","10"};
 	private static String[] turnLeftTiles = {"5","5_flip","6"};
 	private static String[] turnRightTiles = {"5","6_flip","7"};
-	//private static String[] turnDownTiles = {"6","6_flip","7_flip","9","8"};
+	private static String[] turnDownTiles = {"5","6","6_flip","7_flip","9","8"};
 	//private static String[] turnUpTiles = {"9_flip","8"};
 	private static double maxX=0; //to look for destroy more efficiently ==> if after 1 turn maxX decrease, possibly a blocking tile has been played
 	
@@ -283,7 +283,8 @@ public class MyTools {
     	double priorityVerticalTiles;
     	double priorityHorizontalTiles;
     	double priorityTurnLeft=1; 
-    	double priorityTurnRight=1;    	
+    	double priorityTurnRight=1; 
+    	double priorityTurnDown = 1;
     	double isVertic = 1; double isHoriz = 1; double isTurn = 1;
     	double prevMaxX=0;
     	double closestY=0;
@@ -295,7 +296,7 @@ public class MyTools {
     	if(xs.size() == 1) maxX= xs.get(0);
     	else{maxX= Collections.max(xs);}
     	
-    	if(prevMaxX>maxX) { // /!\ expensive search RISKY 
+    	if(prevMaxX>maxX) { // /!\ expensive search RISKY  WORST is really time taxing for NOTHING
     		if(myHand.contains(new SaboteurDestroy())) {	
     			SaboteurMove canDestroy = null;
     			if(prevMaxX>10) canDestroy = destroyBlockingTileCloseToGoal(boardTiles,board.getTurnPlayer());
@@ -349,6 +350,8 @@ public class MyTools {
     		
     		
     		if(pos[0]==11) {
+    			if(Arrays.asList(turnDownTiles).contains(tile.getIdx())) priorityTurnDown =8;
+    			
     			if(priorityTurnLeft==4) priorityTurnLeft*=2;
     			else if(priorityTurnRight==4) priorityTurnRight*=2;
     			else if ( isVertic==2 || tile.getIdx().equals("8")) {priorityVerticalTiles = 10;} 
@@ -365,7 +368,7 @@ public class MyTools {
     		double y = posGoldY - testNotZero;
 
     		//bigger the better  MATH.ABS ??
-    		double h = x *priorityVerticalTiles*isVertic   +   y *priorityHorizontalTiles*isHoriz*priorityTurnRight*priorityTurnLeft;
+    		double h = x *priorityVerticalTiles*isVertic   +   y *priorityHorizontalTiles*isHoriz*priorityTurnRight*priorityTurnLeft*priorityTurnDown;
 
     		//can be made more efficient
     		if(tile.getIdx().equals("8")) h=4*(x+y);
