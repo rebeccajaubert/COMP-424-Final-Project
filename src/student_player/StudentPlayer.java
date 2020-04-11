@@ -117,12 +117,12 @@ public class StudentPlayer extends SaboteurPlayer {
 					goodmove= path;
 				}
 				else {	
+																								
+					if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
 					if(isThereDestroy) {										System.out.println("6");
 		    			SaboteurMove canDestroy = MyTools.destroyBlockingTileCloseToGoal(boardTiles,playerid);
 		    			if(canDestroy != null) return canDestroy;		    			
-					}																			
-					if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
-
+					}
 				}
 			}
 		}
@@ -138,13 +138,12 @@ public class StudentPlayer extends SaboteurPlayer {
 			if(path != null) {
 				goodmove= path;
 			}
-			else { 	
-				if(isThereDestroy) {												
-			SaboteurMove canDestroy = MyTools.destroyBlockingTileCloseToGoal(boardTiles,playerid);
-			if(canDestroy != null) return canDestroy;
-			}
-																						
+			else { 																			
 				if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
+				if(isThereDestroy) {												
+					SaboteurMove canDestroy = MyTools.destroyBlockingTileCloseToGoal(boardTiles,playerid);
+					if(canDestroy != null) return canDestroy;
+				}
 			}
 		}
 

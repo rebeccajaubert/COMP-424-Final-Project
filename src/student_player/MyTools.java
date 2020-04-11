@@ -129,7 +129,7 @@ public class MyTools {
     		}
     		if(card instanceof SaboteurMalus)  return new SaboteurMove(new SaboteurMalus(),0,0,playerid);
     		if(card instanceof SaboteurBonus) {if(nbBonus>=1) { return new SaboteurMove(new SaboteurDrop(),i,0,playerid);} nbBonus++; System.out.println("1 bonus ???");}
-    		if(card instanceof SaboteurDestroy) {if(nbDestroy>=2) {return new SaboteurMove(new SaboteurDrop(), i, 0, playerid);} }
+    		if(card instanceof SaboteurDestroy) {if(nbDestroy>=1) {return new SaboteurMove(new SaboteurDrop(), i, 0, playerid);} }
     		i++;
     	}
     	
@@ -295,7 +295,7 @@ public class MyTools {
     	if(xs.size() == 1) maxX= xs.get(0);
     	else{maxX= Collections.max(xs);}
     	
-    	if(prevMaxX>maxX) { // /!\ expensive search
+    	if(prevMaxX>maxX) { // /!\ expensive search RISKY 
     		if(myHand.contains(new SaboteurDestroy())) {	
     			SaboteurMove canDestroy = null;
     			if(prevMaxX>10) canDestroy = destroyBlockingTileCloseToGoal(boardTiles,board.getTurnPlayer());
@@ -310,7 +310,7 @@ public class MyTools {
     	//closestY = (Double) closestY; //necessary for division
 
     	//set priorities 
-    	priorityVerticalTiles = Math.abs(1-maxX/12)==0 ? 0.1 : Math.abs(1-maxX/12); 
+    	priorityVerticalTiles = 1-maxX/12 ==0 ? 0.1 : Math.abs(1-maxX/12) * 2 ;  //more important to go down
     	// System.out.println("vertical  "+priorityVerticalTiles );
     	priorityHorizontalTiles = Math.abs(1 - closestY/posGoldY ) ==0 ? 0.1 :  Math.abs(1 - closestY/posGoldY ); 
     	//System.out.println("horiz  "+priorityHorizontalTiles );
@@ -318,7 +318,7 @@ public class MyTools {
 
 
 
-    	double maxHeuristic = 4* deckAvail/41 ; 	//so that if not enough a good move then do a drop it's better ==> acceptance decrease as game go on (NOT SURE GOOD)
+    	double maxHeuristic = 2.8* deckAvail/41 ; 	//so that if not enough a good move then do a drop it's better ==> acceptance decrease as game go on (NOT SURE GOOD)
       System.out.println("maxHeuri "+ maxHeuristic);
 
     	//double maxHeuristic =0; //is it better than dropping even if low?
@@ -374,11 +374,11 @@ public class MyTools {
     		if(h> maxHeuristic ) {
 
     			if(tile.getIdx().equals("7") &&  boardTiles[pos[0]][pos[1]+1] != null 
-    					&& (pos[0]!=12 && (pos[1]!=7||pos[1]!=5||pos[1]!=3) )) { System.out.println("it does catch it 7");continue;} //it would go up : adjacent right tile is connected
+    					&& (pos[0]!=12  )) { System.out.println("it does catch it 7");continue;} //it would go up : adjacent right tile is connected
     			else if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null
-    					&& (pos[0]!=12 && (pos[1]!=7||pos[1]!=5||pos[1]!=3)) ) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
+    					&& (pos[0]!=12 ) ) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
     			else if((tile.getIdx().equals("10")||tile.getIdx().equals("9_flip")
-    					&& (pos[0]!=12 && (pos[1]!=7||pos[1]!=5||pos[1]!=3)) ) && pos[0]==11 && (pos[1]==3||pos[1]==5||pos[1]==7) ){ System.out.println("it does catch blocking tiles before hidden");continue;}
+    					&& (pos[0]!=12 ) ) && pos[0]==11 && (pos[1]==3||pos[1]==5||pos[1]==7) ){ System.out.println("it does catch blocking tiles before hidden");continue;}
 
     			path = move;
     			maxHeuristic = h;
