@@ -38,12 +38,12 @@ public class SaboteurBoardPanel extends BoardPanel implements MouseListener, Mou
             String name = tile.getName().contains("Tile") ? tile.getName().split(":")[1] : tile.getName(); //in case we want to load other types of cards images...
             try {
                 URL url = getClass().getResource("tiles");
-                String basePath = ((URL) url).getPath();
+                String basePath = ((URL) url).getPath().replaceAll("%20", " ");
                 this.img= ImageIO.read(new File(basePath, name + ".png"));
             }catch (IOException ie){
                 System.out.println("problem loading images, at");
                 URL url = getClass().getResource("tiles");
-                String basePath = ((URL) url).getPath();
+                String basePath = ((URL) url).getPath().replaceAll("%20", " ");
                 System.out.println(basePath + "\\" + name + ".png");
             }
             this.Height = img.getHeight();
@@ -97,7 +97,7 @@ public class SaboteurBoardPanel extends BoardPanel implements MouseListener, Mou
 
         try{
             URL url = getClass().getResource("tiles");
-            String basePath = ((URL) url).getPath();
+            String basePath = ((URL) url).getPath().replaceAll("%20", " ");
             System.out.println(basePath);
             this.background = ImageIO.read(new File(basePath,"backgroundSmall.png"));
         }catch (IOException ie){
