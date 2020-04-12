@@ -27,7 +27,9 @@ public class MyTools {
 	private static String[] turnLeftTiles = {"5","5_flip","6"};
 	private static String[] turnRightTiles = {"5","6_flip","7"};
 	private static String[] turnDownTiles = {"5","6","6_flip","7_flip","9","8"};
+	
 	//We keep track of this global variable in order to compare the previous move to the next
+	//This refers to the "Y" coordinate on the board
 	private static double maxX=0;
 	
 	//Method that verifies that tunnel is connected to entrance
@@ -186,7 +188,7 @@ public class MyTools {
     	return noGoodMove;
     }
 
-    //TODO describe this method
+    //Method that will check if there is a dead-end/misleading tile near goal, destroy if it can
     public static SaboteurMove destroyBlockingTileCloseToGoal(SaboteurTile[][] boardTiles, int playerid) {
     	for(int i=3;i<=7;i=i+2) { //add condition on top of hidden card
     		if(boardTiles[11][i] != null ) {  
@@ -219,7 +221,7 @@ public class MyTools {
     	return null;
     }
     
-    //TODO describe this method
+    //Destroy tiles that are in the middle of the board  and block a good path
     public static SaboteurMove destroyBlockingMiddleBoard(SaboteurTile[][] boardTiles, int playerid) {
     	//We would like to destroy the tile the is closest to the nugget
     	for(int x=10; x>=6; x--) {
@@ -292,11 +294,10 @@ public class MyTools {
     	double priorityTurnLeft= 1; 
     	double priorityTurnRight= 1; 
     	double priorityTurnDown = 1;
-    	double isVertic = 1; double isHoriz = 1; double isTurn = 1;
+    	double isVertic = 1; double isHoriz = 1;
     	double prevMaxX= 0;
     	double closestY= 0;
     	
-    	//TODO explain this
     	prevMaxX = maxX;
 
     	
@@ -359,37 +360,34 @@ public class MyTools {
     			priorityHorizontalTiles=10;
     		}
     		
-    		//double x = pos[0] > 12 ? 11 : pos[0]; //of tile is past objective set prio as is line 11 
     		double x = pos[0];
-    		//int y = posGoldY-pos[1]>= -1 && posGoldY-pos[1]<= 1 ? 5 : 2; //if in horizontal interval then increase prob
     		double testNotZero = Math.abs(posGoldY - pos[1])==0? 1.5 : Math.abs(posGoldY - pos[1]);
     		double y = posGoldY - testNotZero;
 
-    		//TODO explain why called h and why all the mmultiplication
-    		double h = x *priorityVerticalTiles*isVertic   +   y *priorityHorizontalTiles*isHoriz*priorityTurnRight*priorityTurnLeft*priorityTurnDown;
+    		//h refers to a heuristic threshold for a good move
+    		//Multiplying each coordinate by its priority
+    		double h = x *priorityVerticalTiles*isVertic   +   y*priorityHorizontalTiles*isHoriz*priorityTurnRight*priorityTurnLeft*priorityTurnDown;
 
     		//Can be made more efficient
+    		//Since 8 is not in either category of tiles, we don't want to discard
+    		//multiplying by 4 is quite high, won't be played at the beginning of the game, but more so towards the end
     		if(tile.getIdx().equals("8")) h=4*(x+y);
 
-    	System.out.println("NAME "+tile.getName()+" pos "+ pos[0]+" "+ pos[1]+" h " + h);
-    	
-    		//TODO explain this
-    		if(h > maxHeuristic ) {
+    		//if the heuristic of the move just played (h) is higher than max then enter loop
+    		if(h > maxHeuristic) {
 
     			if(tile.getIdx().equals("7") &&  boardTiles[pos[0]][pos[1]+1] != null 
-    					&& (pos[0]!=12  )) { System.out.println("it does catch it 7");continue;} //it would go up : adjacent right tile is connected
+    					&& (pos[0]!=12  )) { continue;} //it would go up : adjacent right tile is connected
     			else if(tile.getIdx().equals("5_flip") &&  boardTiles[pos[0]][pos[1]-1] !=null
-    					&& (pos[0]!=12 ) ) { System.out.println("it does catch it 5_flip");continue;} //it would go up : adjacent left tile is connected
+    					&& (pos[0]!=12 ) ) { continue;} //it would go up : adjacent left tile is connected
     			else if((tile.getIdx().equals("10")||tile.getIdx().equals("9_flip")
-    					&& (pos[0]!=12 ) ) && pos[0]==11 && (pos[1]==3||pos[1]==5||pos[1]==7) ){ System.out.println("it does catch blocking tiles before hidden");continue;}
+    					&& (pos[0]!=12 ) ) && pos[0]==11 && (pos[1]==3||pos[1]==5||pos[1]==7) ){continue;}
 
     			path = move;
     			maxHeuristic = h;
     		}
     	}
 
-
-    	//TODO check if tile 8 still played when needed
     	return path;
     }
     

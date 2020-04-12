@@ -124,8 +124,8 @@ public class StudentPlayer extends SaboteurPlayer {
 				goodmove = path;
 			}
 			else { 																			
-				if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
-				if(isThereDestroy) {												
+				goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
+				if(goodmove == null && isThereDestroy) {												
 					SaboteurMove canDestroy = MyTools.destroyBlockingTileCloseToGoal(boardTiles,playerid);
 					if(canDestroy != null) return canDestroy;
 				}
