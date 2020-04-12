@@ -8,20 +8,15 @@ import Saboteur.cardClasses.SaboteurDestroy;
 import Saboteur.cardClasses.SaboteurDrop;
 import Saboteur.cardClasses.SaboteurMalus;
 import Saboteur.cardClasses.SaboteurTile;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
-
 import Saboteur.SaboteurBoardState;
 import Saboteur.SaboteurMove;
+
+import java.util.ArrayList;
+
 
 /** A player file submitted by a student. */
 public class StudentPlayer extends SaboteurPlayer {
 	private boolean goldFound = false;
-	private int countMalus= 0;
-	
-	
 	
 	/**
 	 * You must modify this constructor to return your student number. This is
@@ -38,111 +33,112 @@ public class StudentPlayer extends SaboteurPlayer {
 	 * make decisions.
 	 */
 	public Move chooseMove(SaboteurBoardState boardState) {
+		
+		//GATHERING INFO
+		
 		ArrayList<SaboteurCard> myCurrentHand =  boardState.getCurrentPlayerCards();
 		ArrayList<SaboteurMove> moves = boardState.getAllLegalMoves();
 		int playerid = boardState.getTurnPlayer();
+		SaboteurTile[][] boardTiles =boardState.getHiddenBoard(); //board 14x14  
+		
 		SaboteurMove goodmove = null;
-		//HIDDEN POS ARE  5=originPos . hiddenPos = {{originPos+7,originPos-2},{originPos+7,originPos},{originPos+7,originPos+2}};
+		//Reminder: originPos = 5. hiddenPos = {{originPos+7,originPos-2},{originPos+7,originPos},{originPos+7,originPos+2}};
 		int posGoldY = 5;
-
-		//check if gold found 
-		SaboteurTile[][] boardTiles =boardState.getHiddenBoard(); //board 14x14 but only   
+		boolean isThereMalus = false;
+		boolean isThereDestroy = false;
+		
+		//Checking if any of the hidden cards have been revealed to us AND were the gold nugget
 		if(boardTiles[12][3].getIdx().equals("nugget")) {goldFound=true; posGoldY = 3; } 
-		else if(boardTiles[12][5].getIdx().equals("nugget")) { goldFound=true; posGoldY = 5;}  
-		else if( boardTiles[12][7].getIdx().equals("nugget")) {goldFound=true; posGoldY=7; } //should never get here
+		else if(boardTiles[12][5].getIdx().equals("nugget")) { goldFound=true; posGoldY = 5; }  
+		else if( boardTiles[12][7].getIdx().equals("nugget")) { goldFound=true; posGoldY=7; } //should never get here
 		else if(!(boardTiles[12][3].getIdx().equals("8")) && !(boardTiles[12][5].getIdx().equals("8"))) { goldFound=true; posGoldY=7; }
+		
+		//Search if there is a Malus or Destroy in our hand
+		for(SaboteurCard card : myCurrentHand) {
+			if(card instanceof SaboteurMalus)  { isThereMalus=true; }
+			if(card instanceof SaboteurDestroy)  { isThereDestroy=true; }
+		}
 
-		// moves.forEach(move->System.out.println(move.toPrettyString()));
 
-
-
-		//if malus on us
-		if(boardState.getNbMalus(boardState.getTurnPlayer()) > 0) {
-			SaboteurMove testnull = MyTools.counterMalus(moves);
-			if(testnull!=null) {
-				goodmove=testnull;
+		//If a Malus is played against us, then we play best we can
+		if(boardState.getNbMalus(boardState.getTurnPlayer()) > 0) {								
+			SaboteurMove repost = MyTools.counterMalus(myCurrentHand, boardTiles, playerid);
+			
+			if(repost != null) { goodmove = repost; }
+			else { goodmove = MyTools.chooseDrop(myCurrentHand, playerid); }
+			
+			if(goodmove!=null) {
 				MyTools.updateCardNumberAvailable();
 				return goodmove;
 			}
-		}
-
-
-		//if enemy is too close to goal state then should go here
-
-		
-		// /!\ need to handle if destroy card is played in middle of our path !! NB: STRATEGY TO MAKE THE OTHER ROBOT FAIL
-		//IDEA : ONLY PLACE TILE IF CONNECTED TO ENTRANCE --> MAYBE THIS IS MANDATORY ANYWAY ???
-		// board.isLegal if destroy was played
-		//SaboteurTile[][] afterOpponentBoard = boardState.getHiddenBoard();
-		//SAVE BOARD
-		//currentBoard = boardState.getHiddenBoard(); //WHERE ?
-
-
-		
-		//TODO if in row x =12 ==> go to adjacent hidden objective
-
-
-		//1st find gold
-		//I dont know how to account for map cards played by adversary
-		if(!goldFound) { 
-			SaboteurMove mapMove = MyTools.searchGold(moves,boardTiles);
-			if(mapMove!=null) {
-				goodmove=mapMove;
-			}
-			else { 
-				//goodmove = MyTools.chooseDrop(myCurrentHand, playerid); // HERE should be GoDown from gotonugget()
-				SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState); //here gold default to 5
-				if(path != null) {
-					goodmove= path;
-				}
-				else {
-					if(myCurrentHand.contains(new SaboteurDestroy())) {
-		    			MyTools.destroyBlockingTile(moves);
-		    		}
-					goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
-
-				}
+			else {
+				//Room for improvement: less strict condition for dropping a card
+				return new SaboteurMove(new SaboteurDrop(),0,0,playerid);
 			}
 		}
+		
+		//END OF GATHERING INFO
+
+		//If position of gold is still unknown, try to find it!
+		if(!goldFound) {
+			
+			SaboteurMove mapMove = MyTools.searchGold(moves,boardTiles);					
+			//First prioritize playing Map, if you have one
+			if(mapMove != null) {
+				goodmove = mapMove;
+			}
+			else {																			
+				//Second prioritize Malus, if you have one
+				if(isThereMalus) {												
+					MyTools.updateCardNumberAvailable();	
+					return new SaboteurMove(new SaboteurMalus(), 0, 0, playerid);
+				}
+				
+				//If no Malus card, simply make your way down to the hidden cards, to get closer to the nugget
+				//Here, we guess the nugget is at (5,12)
+				SaboteurMove moveTowardsNug = MyTools.goToNugget(moves, myCurrentHand, posGoldY,boardState); 
+				if(moveTowardsNug != null) {
+					goodmove = moveTowardsNug;
+				}
+				//No good move towards gold nugget was found...
+				else {																			
+					if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
+					if(isThereDestroy) {
+		    			SaboteurMove canDestroy = MyTools.destroyBlockingTileCloseToGoal(boardTiles,playerid);
+		    			if(canDestroy != null) return canDestroy;		    			
+					}
+				}
+			}
+		}
+		//You know where the gold is! Congrats!
 		else {
-			//play malus if in hand DOES METHOD CONTAIN WORKS?
-			if(myCurrentHand.contains(new SaboteurMalus())) {
+			
+			//Play Malus if you have it!
+			if(isThereMalus) {												
 				MyTools.updateCardNumberAvailable();
-				System.out.println("MALUS OK");
 				return new SaboteurMove(new SaboteurMalus(), 0, 0, playerid);
 			}
-			
-			SaboteurMove path = MyTools.goToNugget(moves, posGoldY,boardState);
+						
+			SaboteurMove path = MyTools.goToNugget(moves,myCurrentHand, posGoldY,boardState);
 			if(path != null) {
-				goodmove= path;
+				goodmove = path;
 			}
-			else { 
-				if(myCurrentHand.contains(new SaboteurDestroy())) {
-	    			MyTools.destroyBlockingTile(moves);
-	    		}
-				
-				goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
-
+			else { 																			
+				if(goodmove == null) goodmove = MyTools.chooseDrop(myCurrentHand,playerid);
+				if(isThereDestroy) {												
+					SaboteurMove canDestroy = MyTools.destroyBlockingTileCloseToGoal(boardTiles,playerid);
+					if(canDestroy != null) return canDestroy;
+				}
 			}
 		}
 
-			// You probably will make separate functions in MyTools.
-			// For example, maybe you'll need to load some pre-processed best opening
-			// strategies...
-			MyTools.getSomething();
-
-			// Is random the best you can do?
-			Move myMove = boardState.getRandomMove();
-
-			// Return your move to be processed by the server.
-			
-		
-		
+		//No smart moves were found... Bad luck :(
 		if(goodmove == null) {
-			System.out.println("REAL BAD LUCK");
 			MyTools.updateCardNumberAvailable();
+			Move myMove = boardState.getRandomMove();
 			return myMove;
 		}
+		
 		MyTools.updateCardNumberAvailable();
 		return goodmove;
 	}
