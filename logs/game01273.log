@@ -1,0 +1,34 @@
+# Server version 0.08 running on 192.168.2.221:8123
+# Game ID: 1273
+# Board class: Saboteur.SaboteurBoard
+# Timeout: 2000
+# First Move Timeout: 30000
+# Date: Sat Apr 11 21:42:42 EDT 2020
+# Player 1: Player-0, '260729564', running on 127.0.0.1
+# Player 2: Player-1, 'RandomPlayer', running on 127.0.0.1
+START Player-0 260729564
+START Player-1 RandomPlayer
+BoardInit:Tile:1,Tile:6,Tile:6,Tile:6,Tile:5,Tile:10,Map,Tile:8,Tile:9,Tile:0,Map,Tile:0,Tile:8,Destroy,Tile:9,Tile:9,Tile:14,Bonus,Bonus,Tile:3,Tile:0,Tile:15,Bonus,Tile:9,Tile:10,Bonus,Tile:7,Tile:12,Destroy,Map,Tile:4,Malus,Tile:0,Tile:7,Tile:13,Malus,Tile:6,Destroy,Tile:7,Map,Tile:8-Tile:5,Map,Tile:6,Tile:11,Tile:10,Tile:5,Map-Tile:7,Tile:5,Tile:9,Tile:8,Tile:2,Tile:8,Tile:7-Tile:hidden1,Tile:nugget,Tile:hidden2
+Tile:6_flip 5 4 1
+Tile:8 6 4 0
+Map 12 5 1
+Tile:8 7 4 0
+Map 12 3 1
+Tile:6 8 4 0
+Tile:10 6 3 1
+Tile:6 9 4 0
+Tile:5 7 3 1
+Tile:8 10 4 0
+Tile:11_flip 6 5 1
+Tile:0 11 4 0
+Tile:9 4 4 1
+Tile:0 12 4 0
+Tile:5 9 3 1
+Tile:9_flip 13 4 0
+Tile:9_flip 10 3 1
+Tile:10 13 5 0
+Tile:6 4 5 1
+Tile:9 13 6 0
+Tile:8 13 3 1
+GAMEOVER TIMEOUT WINNER 1
+# Game ended: Sat Apr 11 21:42:47 EDT 2020
