@@ -1,3 +1,4 @@
 # SaboteurComp424
-see project_specification file
+see project description and specification and saboteurRules files 
+
 
